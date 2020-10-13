@@ -1,0 +1,80 @@
+import numpy as np
+from sklearn.cluster import AffinityPropagation
+from sklearn import datasets
+import matplotlib.pyplot as plt
+from sklearn import metrics
+irsi=datasets.load_iris()
+x=irsi.get('data')
+y=irsi.get('target')
+num=x.shape[0]#样本总数150
+ratio=7/3 #训练七份，测试三份
+num_test = int(num/(1+ratio))#测试集数量45份
+num_train=num-num_test#训练集105份
+index=np.arange(num)#样本标号。。
+np.random.shuffle(index)#乱序
+x_test=x[index[:num_test],:]#分组
+y_test=y[index[:num_test]]
+x_train=x[index[:num_train],:]
+y_train=y[index[:num_train]]
+ap=AffinityPropagation(preference=-50).fit(x_train)
+label=ap.labels_
+#print(label)
+print('NMI值为：%0.3f'%metrics.completeness_score(label,y_train))
+x0=x_train[label==0]
+x1=x_train[label==1]
+x2=x_train[label==2]
+##################################
+damping=[0.5,0.6,0.7,0.8,0.9]
+afplist=[]
+for i in damping:
+    afplist.append(metrics.completeness_score(AffinityPropagation(preference=-50,damping=i).fit(x_train).labels_,y_train))
+##################################
+plt.figure(figsize=(6,6))
+plt.plot(damping,afplist,linewidth=4,color='red')
+ax=plt.gca()
+ax.set_xlabel('damping')
+ax.set_ylabel('NMI')    
+plt.figure(figsize=(12,12))
+plt.subplot(231)
+plt.scatter(x0[:,0],x0[:,1],c='b')
+plt.scatter(x1[:,0],x1[:,1],c='y')
+plt.scatter(x2[:,0],x2[:,1],c='c')
+ax=plt.gca()
+ax.set_xlabel('s1(cm)')
+ax.set_ylabel('s2(cm)')
+plt.subplot(232)
+plt.scatter(x0[:,0],x0[:,2],c='b')
+plt.scatter(x1[:,0],x1[:,2],c='y')
+plt.scatter(x2[:,0],x2[:,2],c='c')
+ax=plt.gca()
+ax.set_xlabel('s1(cm)')
+ax.set_ylabel('s3(cm)')
+plt.subplot(233)
+plt.scatter(x0[:,0],x0[:,3],c='b')
+plt.scatter(x1[:,0],x1[:,3],c='y')
+plt.scatter(x2[:,0],x2[:,3],c='c')
+ax=plt.gca()
+ax.set_xlabel('s1(cm)')
+ax.set_ylabel('s4(cm)')
+plt.subplot(234)
+plt.scatter(x0[:,1],x0[:,2],c='b')
+plt.scatter(x1[:,1],x1[:,2],c='y')
+plt.scatter(x2[:,1],x2[:,2],c='c')
+ax=plt.gca()
+ax.set_xlabel('s2(cm)')
+ax.set_ylabel('s3(cm)')
+plt.subplot(235)
+plt.scatter(x0[:,1],x0[:,3],c='b')
+plt.scatter(x1[:,1],x1[:,3],c='y')
+plt.scatter(x2[:,1],x2[:,3],c='c')
+ax=plt.gca()
+ax.set_xlabel('s2(cm)')
+ax.set_ylabel('s4(cm)')
+plt.subplot(236)
+plt.scatter(x0[:,2],x0[:,3],c='b')
+plt.scatter(x1[:,2],x1[:,3],c='y')
+plt.scatter(x2[:,2],x2[:,3],c='c')
+ax=plt.gca()
+ax.set_xlabel('s3(cm)')
+ax.set_ylabel('s4(cm)')
+plt.show()
