@@ -1,0 +1,65 @@
+import numpy as np
+from sklearn import datasets
+from sklearn.preprocessing import LabelBinarizer#标签二值化
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report,confusion_matrix
+import matplotlib.pyplot as plt
+digits=datasets.load_digits()
+#print(digits.images.shape)
+#plt.imshow(digits.images[3],cmap='gray')
+#plt.show()
+x=digits.data
+y=digits.target
+#print(x.shape,y.shape)
+#print(x[:2])
+#一千多乘64的矩阵
+#########################################
+#定义一个64——100——10的神经网络
+w0=np.random.random([64,100])*2-1
+w1=np.random.random([100,10])*2-1
+#print(w0.shape,w1.shape)
+x_train,x_test,y_train,y_test=train_test_split(x,y)
+#print(x_train.shape)
+#标签二值化
+labels_train=LabelBinarizer().fit_transform(y_train)
+#print(y_train[:4])
+#print(labels_train[:4])
+#定义激活函数和他的导数
+def sigmoid(x):
+    return 1/(1+np.exp(-x))
+def daosigmoid(x):
+    return x*(1-x)
+#预测结果计算
+def predict(x):
+    L1=sigmoid(np.dot(x,w0))
+    L2=sigmoid(np.dot(L1,w1))
+    return L2
+
+#开始训练
+def train(x,y,steps=10000,lr=0.11):
+    #全局化w0,w1
+    global w0,w1
+    for n in range(steps+1):
+        ##从样本中随机拿个数据
+        i=np.random.randint(x.shape[0])
+        x1=x[i]
+        x1=np.atleast_2d(x1) #单个元素转化为2d矩阵
+        ########################
+        #BP算法公式
+        L1=sigmoid(np.dot(x1,w0))
+        L2=sigmoid(np.dot(L1,w1))
+
+        L2_delta=(y[i]-L2)*daosigmoid(L2)#E对z1的偏导数的值
+        L1_delta=L2_delta.dot(w1.T)*daosigmoid(L1)#E对z0偏导数值
+        #这个偏导值乘以学习率可以更新w，这就是梯度下降
+        w1+=lr*L1.T.dot(L2_delta)
+        w0+=lr*x1.T.dot(L1_delta)#学习率lr也就是阿尔法才能更新参数
+
+        if n%1000==0:
+            output=predict(x_test)
+            predictions=np.argmax(output,axis=1)
+            acc=np.mean(np.equal(predictions,y_test) )
+            print(str(n+1)+'acc'+str(acc))
+#train(x_train,labels_train,30000)
+#print(np.atleast_2d(x[10]))
+#print(y)            
