@@ -1,0 +1,94 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from torch import nn,optim
+from torch.autograd import Variable
+import torch
+from torchvision import datasets,transforms
+from torch.utils.data import DataLoader
+#导入数据集
+train_dataset=datasets.MNIST(root="./",
+                     train=True,
+                     transform=transforms.ToTensor(),
+                     download=False)
+test_dataset=datasets.MNIST(root="./",
+                     train=False,
+                     transform=transforms.ToTensor(),
+                     download=False)
+
+#数据太多，不要分批训练，定义批次生成器，和每个批次大小
+batch_size=50
+train_loader=DataLoader(dataset=train_dataset,
+                        batch_size=batch_size,
+                        shuffle=True)
+test_loader=DataLoader(dataset=test_dataset,
+                        batch_size=batch_size,
+                        shuffle=True)
+for i ,data in enumerate(train_loader):
+    inputs,labels=data
+    print(inputs.shape) #torch.Size([64,1,28,28])
+    print(labels.shape) #torch.Size([64])
+    break
+print(labels)#0-9的数据，总共一批64个
+print(len(train_loader),len(test_loader))#总共会循环938次60000张图片，分成938个批次，每个批次64个值
+########################################################
+#########定义网络########################
+class Net(nn.Module):
+    def __init__(self):
+        super(Net,self).__init__()#父类初始化，固定格式
+        self.fcl=nn.Linear(784,10)#定义一个简单神经网络输入层直接到输出层fcl
+        self.softmax=nn.Softmax(dim=1) #定义激活幻术softmax.dim是维度从0开始，等于1就是矩阵的列
+    def forward(self,x):#前向传播函数
+        #x是([64,1,28,28])需要变成（[64,784]）
+        x=x.view(x.size()[0],-1)#0是64，-1是自动匹配1*28*28=784
+        x=self.fcl(x)    #传给网络再激活返回
+        x=self.softmax(x)
+        return x
+
+########################################################
+####定义模型
+model=Net()
+####定义代价函数MSEloss均方损失函数，分类问题用交叉熵比较好
+#mse_loss=nn.MSELoss()
+mse_loss=nn.CrossEntropyLoss()
+####定义优化器,最简单的梯度下降法SGD,需要传入模型参数
+optimizer=optim.SGD(model.parameters(),0.5) 
+######################################################
+##定义模型训练函数
+##
+def train():
+    for i,data in enumerate(train_loader):#循环938次
+        #获得一个批次数据
+        inputs,labels=data
+        out=model(inputs)#输出是(64,10)
+        #交叉熵代价函数out是（batch.C）labels(batch)这个损失函数以可两维对一维，因为独热编码已经被封装在函数内部了
+        loss=mse_loss(out,labels)
+
+        #梯度清零
+        optimizer.zero_grad()
+        #计算梯度
+        loss.backward()
+        #跟新权值
+        optimizer.step()
+
+def test():
+    correct=0
+    for i,data in enumerate(test_loader):
+        inputs,labels=data
+        out=model(inputs)
+        #计算out的1维度最大值所在的位置，softmax()所在计算出的最大概率所在的位置
+        _,predicted=torch.max(out,1)
+        #预测值和标签值相同的数目累加的
+        correct+=(predicted==labels).sum()
+    print("准确率：{0}".format(correct.item()/len(test_dataset)))    
+
+
+for i in range(10):
+    print('i:',i)
+    train()
+    test()
+
+##train()
+##test()
+##train()
+##test()
+        
