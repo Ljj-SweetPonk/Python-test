@@ -1,0 +1,50 @@
+import numpy as np
+
+#定义一个激活函数
+def sigmoid(x,deriv=False):
+    if deriv==True:
+        return x*(1-x) #求导值就是这个
+    return 1/(1+np.exp(-x))
+##t=sigmoid(4)
+##print(t)
+#数据
+x=np.array([[0,0,0],
+            [0,1,1],
+            [1,0,1],
+            [0,0,1],
+            [0,0,1]])
+#print(x.shape)
+y=np.array([[0],
+            [1],
+            [1],
+            [0],
+            [0]])
+#print(y.shape)
+#####################
+np.random.seed(1)#使前后所使用的随机数一样
+#####################
+#定义三层的神经网络输入到隐藏层w0，隐藏层到输出层w1
+w0=np.random.random((3,4))*2-1
+w1=np.random.random((4,1))*2-1
+#print(w0,w1)
+#####################
+for i in range(6000):
+    l0=x
+    l1=sigmoid(np.dot(l0,w0))#数组相乘
+    l2=sigmoid(np.dot(l1,w1))
+
+    #真实值减去预测值,偏差值E
+    l2_error=y-l2
+    if i%1000==0:#每1000次打印一下偏差值
+        
+        print(np.around(l2, 0))
+        print("Error"+str(np.mean(np.abs(l2_error))))
+######################################################        
+    l2_delta=l2_error*sigmoid(l2,deriv=True)##########        
+    l1_error=l2_delta.dot(w1.T)             ##########
+    l1_delta=l1_error*sigmoid(l1,deriv=True)##########
+    #跟新
+    w1+=l1.T.dot(l2_delta)
+    w0+=l0.T.dot(l1_delta)#这个T是转置
+######################################################
+    
